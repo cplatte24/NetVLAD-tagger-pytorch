@@ -1,8 +1,18 @@
 # JetVLAD tagger
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cplatte24/NetVLAD-tagger-pytorch/HEAD?labpath=JetVLAD_demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cplatte24/NetVLAD-tagger-pytorch/blob/master/JetVLAD_demo.ipynb)
+
 [Identifying Heavy-Flavor Jets Using Vectors of Locally Aggregated](https://arxiv.org/abs/2005.01842)  
 Jana Bielčíková, Raghav Kunnawalkam Elayavalli, Georgy Ponimatkin, Jörn H. Putschke, Josef Šivic  
 JINST 16 P03017
+
+### Demo notebook
+[JetVLAD_demo.ipynb](JetVLAD_demo.ipynb) trains the tagger on the ROOT files included in
+this repository and plots background rejection and signal purity. Click the Binder badge
+above to run it in the browser with no setup (the first launch takes a few minutes to
+build), or the Colab badge to run it on Google Colab (the notebook clones this repository
+automatically).
   
 ### Dependecies
 Create a new conda environment i.e.
