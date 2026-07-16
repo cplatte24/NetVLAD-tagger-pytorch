@@ -1,15 +1,15 @@
 name: netvlad-pytorch
 channels:
   - pytorch
+  - conda-forge
 dependencies:
-  - python=3.6
+  - python=3.11
   - pip
   - numpy
   - matplotlib
-  - jupyterlab
+  - scipy
+  - notebook
   - scikit-learn
-  - cudatoolkit=10.0
-  - pytorch=1.1.0
-  - torchvision
+  - pytorch
   - pip:
       - uproot

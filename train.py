@@ -16,6 +16,8 @@ parser.add_argument('--depth', type=int, help='number of residual blocks to use'
 parser.add_argument('--signal', type=str, help='select signal in dataset')
 parser.add_argument('--track-shuffling', action='store_true', help='enable track shuffling during training')
 parser.add_argument('--jobid', type=str, metavar='run index (can be SLURM job id)', default='jetvlad_run_0')
+parser.add_argument('--epochs', type=int, help='maximum number of training epochs', default=2000)
+parser.add_argument('--patience', type=int, help='epochs without val improvement before early stopping', default=10)
 args = parser.parse_args()
 
 
@@ -42,8 +44,9 @@ def main():
     run_path = Path().resolve() / 'training_runs' / args.jobid
     run_path.mkdir(parents=True, exist_ok=True)
 
-    save_path = run_path / f'netvlad_best_val_loss_{args.train_data.replace(".root", "")}_{args.jobid}.pth'
-
+   # save_path = run_path / f'netvlad_best_val_loss_{args.train_data.replace(".root", "")}_{args.jobid}.pth'
+    train_name = Path(args.train_data).stem
+    save_path = run_path / f'netvlad_best_val_loss_{train_name}_{args.jobid}.pth'
     if args.variables == 'trkvtxfrag':
         model = NetVLADTagger(args.clusters, 8, args.depth)
     elif args.variables == 'trkfrag':
@@ -55,7 +58,9 @@ def main():
     elif args.variables == 'vtx':
         model = NetVLADTagger(args.clusters, 2, args.depth)
 
-    model.cuda()
+#    model.cuda()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
     print(model)
 
     criterion = nn.CrossEntropyLoss()
@@ -67,7 +72,7 @@ def main():
     best_roc = 0
     early_stop = 0
 
-    for i in range(2000):
+    for i in range(args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, i)
         val_loss, acc = validate(val_loader, model, criterion)
         roc = test(val_loader, args.train_data, model, False)
@@ -85,12 +90,13 @@ def main():
         print("Best acc: " + str(best_acc))
         print("Best val loss: " + str(best_val))
 
-        if early_stop == 10:
+        if early_stop == args.patience:
             break
 
     model.load_state_dict(torch.load(save_path.as_posix()))
 
-    log_path = run_path / f'{args.train_data.replace(".root", "")}_{args.jobid}'
+    #log_path = run_path / f'{args.train_data.replace(".root", "")}_{args.jobid}'
+    log_path = run_path / f'{train_name}_{args.jobid}'
     final_roc_auc = test(test_loader,
                          log_path,
                          model,

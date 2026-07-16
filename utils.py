@@ -4,7 +4,7 @@ import torch.utils.data
 import uproot
 import numpy as np
 from sklearn.metrics import roc_curve, precision_recall_curve, auc
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class JetVectorDataset(torch.utils.data.Dataset):
     def __init__(self, file_path, signal, variables, track_shuffling):
@@ -18,8 +18,9 @@ class JetVectorDataset(torch.utils.data.Dataset):
         self.signal = signal
         self.jets = 0
         self.track_shuffling = track_shuffling
-        jets = self.file.arrays(self.file.keys())
-
+#        self.n_events = min(10000, self.file.num_entries)
+        self.n_events = self.file.num_entries
+        jets = self.file.arrays(self.file.keys(), library="np")
         # Calculate normalizations of the observables
         mu_pt, sigma_pt = self._calculate_normalization('fPt', jets)
         mu_eta, sigma_eta = self._calculate_normalization('fEta', jets)
@@ -34,46 +35,48 @@ class JetVectorDataset(torch.utils.data.Dataset):
 
         # Generate matrices representing jet, tracks are in the rows, columns represent different obeservables
         self.X, self.y = list(), list()
-        for i in range(len(self.file)):
+#        for i in range(len(self.file)):
+        for i in range(self.n_events):
             if variables == 'trkvtxfrag':
                 jet_matrix = np.hstack(
-                    ((jets[b'fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
-                     (jets[b'fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
-                     (jets[b'fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
-                     (jets[b'fZ'][i].reshape(-1, 1) - mu_z) / sigma_z,
-                     (jets[b'fDeltaR'][i].reshape(-1, 1) - mu_deltaR) / sigma_deltaR,
-                     (jets[b'fZ'][i].reshape(-1, 1) * jets[b'fDeltaR'][i].reshape(-1, 1) * jets[b'fDeltaR'][i].reshape(
+                    ((jets['fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
+                     (jets['fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
+                     (jets['fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
+                     (jets['fZ'][i].reshape(-1, 1) - mu_z) / sigma_z,
+                     (jets['fDeltaR'][i].reshape(-1, 1) - mu_deltaR) / sigma_deltaR,
+                     (jets['fZ'][i].reshape(-1, 1) * jets['fDeltaR'][i].reshape(-1, 1) * jets['fDeltaR'][i].reshape(
                          -1, 1) - mu_m) / sigma_m,
-                     (jets[b'fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
-                     (jets[b'fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
+                     (jets['fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
+                     (jets['fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
             elif variables == 'trkfrag':
                 jet_matrix = np.hstack(
-                    ((jets[b'fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
-                     (jets[b'fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
-                     (jets[b'fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
-                     (jets[b'fZ'][i].reshape(-1, 1) - mu_z) / sigma_z,
-                     (jets[b'fDeltaR'][i].reshape(-1, 1) - mu_deltaR) / sigma_deltaR,
-                     (jets[b'fZ'][i].reshape(-1, 1) * jets[b'fDeltaR'][i].reshape(-1, 1) * jets[b'fDeltaR'][i].reshape(-1, 1) - mu_m) / sigma_m))
+                    ((jets['fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
+                     (jets['fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
+                     (jets['fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
+                     (jets['fZ'][i].reshape(-1, 1) - mu_z) / sigma_z,
+                     (jets['fDeltaR'][i].reshape(-1, 1) - mu_deltaR) / sigma_deltaR,
+                     (jets['fZ'][i].reshape(-1, 1) * jets['fDeltaR'][i].reshape(-1, 1) * jets['fDeltaR'][i].reshape(-1, 1) - mu_m) / sigma_m))
             elif variables == 'trkvtx':
                 jet_matrix = np.hstack(
-                    ((jets[b'fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
-                     (jets[b'fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
-                     (jets[b'fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
-                     (jets[b'fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
-                     (jets[b'fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
+                    ((jets['fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
+                     (jets['fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
+                     (jets['fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi,
+                     (jets['fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
+                     (jets['fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
             elif variables == 'trk':
                 jet_matrix = np.hstack(
-                    ((jets[b'fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
-                     (jets[b'fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
-                     (jets[b'fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi))
+                    ((jets['fPt'][i].reshape(-1, 1) - mu_pt) / sigma_pt,
+                     (jets['fEta'][i].reshape(-1, 1) - mu_eta) / sigma_eta,
+                     (jets['fPhi'][i].reshape(-1, 1) - mu_phi) / sigma_phi))
             elif variables == 'vtx':
                 jet_matrix = np.hstack(
-                    ((jets[b'fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
-                     (jets[b'fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
+                    ((jets['fDCA_z'][i].reshape(-1, 1) - mu_dca_z) / sigma_dca_z,
+                     (jets['fDCA_xy'][i].reshape(-1, 1) - mu_dca_xy) / sigma_dca_xy))
 
             # Depending on the chosen signal generate labels accordingly
+            jet_matrix = np.nan_to_num(jet_matrix)
             if self.signal == 'hf_vs_l':
-                if jets[b'mTag'][i] - 1 in [1, 2]:
+                if jets['mTag'][i] - 1 in [1, 2]:
                     self.X.append(jet_matrix)
                     self.y.append(1)
                     self.jets += 1
@@ -82,16 +85,16 @@ class JetVectorDataset(torch.utils.data.Dataset):
                     self.y.append(0)
                     self.jets += 1
             elif self.signal == 'c_vs_b':
-                if jets[b'mTag'][i] - 1 == 2:
+                if jets['mTag'][i] - 1 == 2:
                     self.X.append(jet_matrix)
                     self.y.append(1)
                     self.jets += 1
-                elif jets[b'mTag'][i] - 1 == 1:
+                elif jets['mTag'][i] - 1 == 1:
                     self.X.append(jet_matrix)
                     self.y.append(0)
                     self.jets += 1
             elif self.signal == 'c_vs_all':
-                if jets[b'mTag'][i] - 1 == 1:
+                if jets['mTag'][i] - 1 == 1:
                     self.X.append(jet_matrix)
                     self.y.append(1)
                     self.jets += 1
@@ -100,7 +103,7 @@ class JetVectorDataset(torch.utils.data.Dataset):
                     self.y.append(0)
                     self.jets += 1
             elif self.signal == 'b_vs_all':
-                if jets[b'mTag'][i] - 1 == 2:
+                if jets['mTag'][i] - 1 == 2:
                     self.X.append(jet_matrix)
                     self.y.append(1)
                     self.jets += 1
@@ -122,14 +125,16 @@ class JetVectorDataset(torch.utils.data.Dataset):
         var = list()
 
         if variable != 'fM':
-            for i in range(len(self.file)):
-                var.extend(jets[bytes(variable, encoding='utf-8')][i])
+#            for i in range(len(self.file)):
+            for i in range(self.n_events):
+                var.extend(jets[variable][i])
         else:
-            for i in range(len(self.file)):
-                var.extend(jets[b'fZ'][i]*jets[b'fDeltaR'][i]*jets[b'fDeltaR'][i])
+#            for i in range(len(self.file)):
+            for i in range(self.n_events):
+                var.extend(jets['fZ'][i]*jets['fDeltaR'][i]*jets['fDeltaR'][i])
 
-        mu_var, sigma_var = np.mean(var), np.std(var)
-
+       # mu_var, sigma_var = np.mean(var), np.std(var)
+        mu_var, sigma_var = np.nanmean(var), np.nanstd(var)
         del var
 
         return mu_var, sigma_var
@@ -228,9 +233,10 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        X = X.cuda(non_blocking=True)
-        y = y.cuda(non_blocking=True)
-
+#        X = X.cuda(non_blocking=True)
+#        y = y.cuda(non_blocking=True)
+        X = X.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)
         # compute output
         output = model(X)
         loss = criterion(output, y)
@@ -269,9 +275,10 @@ def validate(val_loader, model, criterion):
         end = time.time()
         for i, (X, y) in enumerate(val_loader):
 
-            X = X.cuda(non_blocking=True)
-            y = y.cuda(non_blocking=True)
-
+      #      X = X.cuda(non_blocking=True)
+     #       y = y.cuda(non_blocking=True)
+            X = X.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
             # compute output
             output = model(X)
             loss = criterion(output, y)
@@ -303,8 +310,8 @@ def test(test_loader, log_path, model, generate_curve=False):
     with torch.no_grad():
         for i, (X, y) in enumerate(test_loader):
 
-            X = X.cuda(non_blocking=True)
-
+       #     X = X.cuda(non_blocking=True)
+            X = X.to(device, non_blocking=True)
             output = model(X)
             y_pred.extend(prob(output.cpu()).numpy()[:, 1])
             y_true.extend(y.numpy())

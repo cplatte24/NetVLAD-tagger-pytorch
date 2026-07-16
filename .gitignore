@@ -5,7 +5,13 @@ results/
 temp/
 test/
 .DS_Store
-*.root
+
+# ROOT data files ARE included (needed for Binder/Colab), except this one:
+# too large for GitHub's 100 MB file limit - keep locally / on ACCRE
+training_data/output_training_all_data.root
+
+# Editor backup files
+*#
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
