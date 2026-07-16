@@ -1,6 +1,5 @@
-# JetVLAD tagger
+# JetVLAD tagger for Jet Classification
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cplatte24/NetVLAD-tagger-pytorch/HEAD?labpath=JetVLAD_demo.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cplatte24/NetVLAD-tagger-pytorch/blob/master/JetVLAD_demo.ipynb)
 
 [Identifying Heavy-Flavor Jets Using Vectors of Locally Aggregated](https://arxiv.org/abs/2005.01842)  
