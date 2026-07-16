@@ -8,9 +8,7 @@ JINST 16 P03017
 
 ### Demo notebook
 [JetVLAD_demo.ipynb](JetVLAD_demo.ipynb) trains the tagger on the ROOT files included in
-this repository and plots background rejection and signal purity. Click the Binder badge
-above to run it in the browser with no setup (the first launch takes a few minutes to
-build), or the Colab badge to run it on Google Colab (the notebook clones this repository
+this repository and plots background rejection and signal purity. Click the Colab badge to run it on Google Colab (the notebook clones this repository
 automatically).
   
 ### Dependecies
